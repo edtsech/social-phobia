@@ -13,17 +13,13 @@
                (input-text "#signin-email" (-> bio :networks :twitter :login))
                (input-text "#signin-password" (-> bio :networks :twitter :pass))
                (click ".submit.flex-table-btn")
-
                (to "http://twitter.com/settings/profile")
                (implicit-wait 3000)
-
                (replace-text "user_name" (str (bio :first-name) " " (bio :last-name)))
                (replace-text "user_location" (bio :location))
                (replace-text "user_url" (bio :web))
                (replace-text "user_description" (bio :bio))
-
                (click "#settings_save")
-
                (quit))
   {:twitter "ok"})
 
