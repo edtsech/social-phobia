@@ -33,22 +33,16 @@
                (input-text "#username" (-> bio :networks :foursquare :login))
                (input-text "#password" (-> bio :networks :foursquare :pass))
                (click (find-element {:css "input.greenButton"}))
-
                (to "https://foursquare.com/settings/")
                ; (implicit-wait 3000)
-
                (replace-text "firstname" (bio :first-name))
                (replace-text "lastname" (bio :last-name))
                (replace-text "userEmail" (bio :email))
-
                (-> (find-element {:css "textarea.formStyle"})
                  clear
                  (input-text (bio :bio)))
-
                (replace-text "ht_id" (bio :location))
-
                (click (find-element {:css "input.greenButton"}))
-
                (quit))
   {:foursquare "ok"})
 
