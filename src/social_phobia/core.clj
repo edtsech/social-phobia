@@ -1,24 +1,27 @@
 (ns social-phobia.core
-  (:use [clj-webdriver.taxi])
-  (:require [clj-yaml.core :as yaml]))
+  (:use [clj-webdriver.taxi]
+        [clojure.java.io])
+  (:require [clj-yaml.core :as yaml])
+  (:gen-class main true))
 
-(defn- replace-text 
+(defn- replace-text
   "Find an input and replace a text in it.
-  
+
   Examples:
   =========
-  
+
   (replace-text \"input#field\" \"smith\")"
   [selector text]
   (-> (find-element selector)
-      clear
-      (input-text text)))
+    clear
+    (input-text text)))
 
 (defn update-twitter-bio [bio]
   (with-driver {:browser (bio :browser)}
                (to "http://twitter.com/")
-               (input-text "#signin-email" (-> bio :networks :twitter :login))
-               (input-text "#signin-password" (-> bio :networks :twitter :pass))
+               (let [auth (-> bio :networks :twitter)]
+                 (input-text "#signin-email" (auth :login))
+                 (input-text "#signin-password" (auth :pass)))
                (click ".submit.flex-table-btn")
                (to "http://twitter.com/settings/profile")
                (implicit-wait 3000)
@@ -33,8 +36,9 @@
 (defn update-foursquare-bio [bio]
   (with-driver {:browser (bio :browser)}
                (to "https://foursquare.com/login?continue=%2F&clicked=true")
-               (input-text "#username" (-> bio :networks :foursquare :login))
-               (input-text "#password" (-> bio :networks :foursquare :pass))
+               (let [auth (-> bio :networks :foursquare)]
+                 (input-text "#username" (auth :login))
+                 (input-text "#password" (auth :pass)))
                (click (find-element {:css "input.greenButton"}))
                (to "https://foursquare.com/settings/")
                ; (implicit-wait 3000)
@@ -50,8 +54,9 @@
 (defn update-github-bio [bio]
   (with-driver {:browser (bio :browser)}
                (to "https://github.com/login")
-               (input-text "#login_field" (-> bio :networks :github :login))
-               (input-text "#password" (-> bio :networks :github :pass))
+               (let [auth (-> bio :networks :github)]
+                 (input-text "#login_field" (auth :login))
+                 (input-text "#password" (auth :pass)))
                (click (find-element {:xpath "//input[@type='submit']"}))
                (to "https://github.com/settings/profile")
                (replace-text {:xpath "//dl[@data-name='profile_name']//input"}
@@ -68,8 +73,9 @@
 (defn update-instagram-bio [bio]
   (with-driver {:browser (bio :browser)}
                (to "https://instagram.com/accounts/login/?next=/accounts/edit/")
-               (input-text "#id_username" (-> bio :networks :instagram :login))
-               (input-text "#id_password" (-> bio :networks :instagram :pass))
+               (let [auth (-> bio :networks :instagram)]
+                 (input-text "#id_username" (auth :login))
+                 (input-text "#id_password" (auth :pass)))
                (click (find-element {:css "input.button-green"}))
                ; (implicit-wait 3000)
                (replace-text {:css "#id_first_name"} (str (bio :first-name) " " (bio :last-name)))
@@ -90,8 +96,13 @@
     (updater config)
     {network "not supported"}))
 
-(defn -main [file-name]
-  (let [config (yaml/parse-string (slurp file-name))]
-    (println (yaml/generate-string (map #(update-bio config %)
-                                        (keys (:networks config)))))))
+(defn- write-to [file-name text]
+  (with-open [wrtr (writer file-name)]
+    (.write wrtr text)))
+
+(defn -main [input-file output-file]
+  (let [config (yaml/parse-string (slurp input-file))]
+    (write-to output-file
+              (yaml/generate-string (map #(update-bio config %)
+                                         (keys (:networks config)))))))
 
