@@ -1,6 +1,8 @@
 (ns social-phobia.core
   (:use [clj-webdriver.taxi]
-        [clojure.java.io])
+        [clojure.java.io]
+        [clojure.algo.monads]
+        [clojure.core.incubator :only [-?>]])
   (:require [clj-yaml.core :as yaml])
   (:gen-class main true))
 
@@ -12,9 +14,21 @@
 
   (replace-text \"input#field\" \"smith\")"
   [selector text]
-  (-> (find-element selector)
-    clear
-    (input-text text)))
+  (let [el (find-element selector)]
+    (when (:webelement el)
+      (-> el
+        clear
+        (input-text text)))))
+
+(defn- safe-click [selector]
+  (let [el (find-element selector)]
+    (when (:webelement el)
+      (click el)
+      0)))
+
+(defn- quit-and-return [network]
+  (quit)
+  {network "ok"})
 
 (defn update-twitter-bio [bio]
   (with-driver {:browser (bio :browser)}
@@ -70,30 +84,34 @@
                (quit))
   {:github "ok"})
 
-(defn update-instagram-bio [bio]
+(defn update-instagram-bio [bio network]
   (with-driver {:browser (bio :browser)}
-               (to "https://instagram.com/accounts/login/?next=/accounts/edit/")
-               (let [auth (-> bio :networks :instagram)]
-                 (input-text "#id_username" (auth :login))
-                 (input-text "#id_password" (auth :pass)))
-               (click (find-element {:css "input.button-green"}))
-               ; (implicit-wait 3000)
-               (replace-text {:css "#id_first_name"} (str (bio :first-name) " " (bio :last-name)))
-               (replace-text {:css "#id_external_url"} (bio :web))
-               (replace-text {:css "#id_biography"} (bio :bio))
-               (click (find-element {:css "input.button-green"}))
-               (quit))
-  {:instagram "ok"})
+               (let [auth (-> bio :networks network)]
+                 (if-let [res (domonad maybe-m
+                          [_ (to "https://instagram.com/accounts/login/?next=/accounts/edit/")
+                           _ (replace-text {:css "#id_username"} (auth :login))
+                           _ (replace-text {:css "#id_password"} (auth :pass))
+                           _ (safe-click {:css "input.button-green"})
+                           ; (implicit-wait 3000)
+                           _ (replace-text {:css "#id_first_name"} (str (bio :first-name) " " (bio :last-name)))
+                           _ (replace-text {:css "#id_external_url"} (bio :web))
+                           _ (replace-text {:css "#id_biography"} (bio :bio))
+                           _ (safe-click {:css "input.button-green"})]
+                          (quit-and-return network))]
+                   res
+                   {network "error"}))))
 
 (def updaters
-  {:instagram update-instagram-bio
-   :github update-github-bio
-   :foursquare update-foursquare-bio
-   :twitter update-twitter-bio})
+  {
+   :instagram update-instagram-bio
+   ; :github update-github-bio
+   ; :foursquare update-foursquare-bio
+   ; :twitter update-twitter-bio
+   })
 
 (defn update-bio [config network]
   (if-let [updater (updaters network)]
-    (updater config)
+    (updater config network)
     {network "not supported"}))
 
 (defn- write-to [file-name text]
