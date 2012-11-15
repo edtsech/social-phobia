@@ -44,14 +44,14 @@
                  [_ (to "http://twitter.com/")
                   _ (input-text "#signin-email" (auth :login))
                   _ (input-text "#signin-password" (auth :pass))
-                  _ (click ".submit.flex-table-btn")
+                  _ (safe-click {:css ".submit.flex-table-btn"})
                   _ (to "http://twitter.com/settings/profile")
                   _ (implicit-wait 3000)
                   _ (replace-text {:css "#user_name"} (str (bio :first-name) " " (bio :last-name)))
                   _ (replace-text {:css "#user_location"} (bio :location))
                   _ (replace-text {:css "#user_url"} (bio :web))
                   _ (replace-text {:css "#user_description"} (bio :bio))
-                  _ (click "#settings_save")
+                  _ (safe-click {:css "#settings_save"})
                   _ (quit)]
                  {network "ok"})})))
 
@@ -64,14 +64,14 @@
                  [_ (to "https://foursquare.com/login?continue=%2F&clicked=true")
                   _ (input-text "#username" (auth :login))
                   _ (input-text "#password" (auth :pass))
-                  _ (click (find-element {:css "input.greenButton"}))
+                  _ (safe-click {:css "input.greenButton"})
                   _ (to "https://foursquare.com/settings/")
                   _ (replace-text {:css "#firstname"} (bio :first-name))
                   _ (replace-text {:css "#lastname"} (bio :last-name))
                   _ (replace-text {:css "#userEmail"} (bio :email))
                   _ (replace-text {:css "textarea.formStyle"} (bio :bio))
                   _ (replace-text {:css "#ht_id"} (bio :location))
-                  _ (click (find-element {:css "input.greenButton"}))
+                  _ (safe-click {:css "input.greenButton"})
                   _ (quit)]
                  {:status "ok"})})))
 
@@ -84,7 +84,7 @@
                  [_ (to "https://github.com/login")
                   _ (input-text "#login_field" (auth :login))
                   _ (input-text "#password" (auth :pass))
-                  _ (click (find-element {:xpath "//input[@type='submit']"}))
+                  _ (safe-click {:xpath "//input[@type='submit']"})
                   _ (to "https://github.com/settings/profile")
                   _ (replace-text {:xpath "//dl[@data-name='profile_name']//input"}
                                   (str (bio :first-name) " " (bio :last-name)))
@@ -93,7 +93,7 @@
                   _ (replace-text {:xpath "//dl[@data-name='profile_company']//input"} (bio :company))
                   _ (replace-text {:xpath "//dl[@data-name='profile_location']//input"} (bio :location))
                   _ (replace-text {:xpath "//dl[@data-name='gravatar_email']//input"} (bio :email))
-                  _ (click (find-element {:css "button.button.classy.primary"}))
+                  _ (safe-click {:css "button.button.classy.primary"})
                   _ (quit)]
                  {:status "ok"})})))
 
