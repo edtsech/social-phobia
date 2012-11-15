@@ -6,29 +6,38 @@
   (:require [clj-yaml.core :as yaml])
   (:gen-class main true))
 
+(defmonad mumbo-m
+   "Monad describing computations with possible failures. Failure is
+    represented by nil, any other value is considered valid. As soon as
+    a step returns nil, the whole computation will yield nil as well."
+   [m-zero   nil
+    m-result (fn m-result-mumbo [v] v)
+    m-bind   (fn m-bind-mumbo [mv f]
+               (if (:error mv) mv (f mv)))
+    ; m-plus   (fn m-plus-mumbo [& mvs]
+    ;            (first (drop-while nil? mvs)))
+    ])
+
+(defn error [selector]
+  {:error (str (first (vals selector)) " not found")})
+
 (defn- replace-text
-  "Find an input and replace a text in it.
-
-  Examples:
-  =========
-
-  (replace-text \"input#field\" \"smith\")"
+  "Find an input and replace a text in it."
   [selector text]
   (let [el (find-element selector)]
-    (when (:webelement el)
-      (-> el
-        clear
-        (input-text text)))))
+    (if (:webelement el)
+      (do
+        (-> el
+          clear
+          (input-text text)))
+      (error selector))))
 
 (defn- safe-click [selector]
   (let [el (find-element selector)]
-    (when (:webelement el)
-      (click el)
-      0)))
-
-(defn- quit-and-return [network]
-  (quit)
-  {network "ok"})
+    (if (:webelement el)
+      (do
+        (click el))
+      (error selector))))
 
 (defn update-twitter-bio [bio]
   (with-driver {:browser (bio :browser)}
@@ -87,19 +96,19 @@
 (defn update-instagram-bio [bio network]
   (with-driver {:browser (bio :browser)}
                (let [auth (-> bio :networks network)]
-                 (if-let [res (domonad maybe-m
-                          [_ (to "https://instagram.com/accounts/login/?next=/accounts/edit/")
-                           _ (replace-text {:css "#id_username"} (auth :login))
-                           _ (replace-text {:css "#id_password"} (auth :pass))
-                           _ (safe-click {:css "input.button-green"})
-                           ; (implicit-wait 3000)
-                           _ (replace-text {:css "#id_first_name"} (str (bio :first-name) " " (bio :last-name)))
-                           _ (replace-text {:css "#id_external_url"} (bio :web))
-                           _ (replace-text {:css "#id_biography"} (bio :bio))
-                           _ (safe-click {:css "input.button-green"})]
-                          (quit-and-return network))]
-                   res
-                   {network "error"}))))
+                 (let [res (domonad mumbo-m
+                                    [_ (to "https://instagram.com/accounts/login/?next=/accounts/edit/")
+                                     _ (replace-text {:css "#id_username"} (auth :login))
+                                     _ (replace-text {:css "#id_password"} (auth :pass))
+                                     _ (safe-click {:css "input.button-green"})
+                                     ; (implicit-wait 3000)
+                                     _ (replace-text {:css "#id_first_name"} (str (bio :first-name) " " (bio :last-name)))
+                                     _ (replace-text {:css "#id_external_url"} (bio :web))
+                                     _ (replace-text {:css "#id_biography"} (bio :bio))
+                                     _ (safe-click {:css "input.button-green"})]
+                                    (quit))]
+                   {network res}))))
+
 
 (def updaters
   {
