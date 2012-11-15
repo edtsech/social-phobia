@@ -46,6 +46,8 @@ Run with:
 
 `java -jar target/social-phobia-0.1.0-standalone.jar config.yml output.yml`
 
+Last build you can get [here](https://dl.dropbox.com/u/2428018/social-phobia-0.1.0-standalone.jar).
+
 ```
 $ cat output.yml
 - {instagram: ok}
