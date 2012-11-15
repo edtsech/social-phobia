@@ -1,20 +1,31 @@
 (ns social-phobia.core
   (:use [clj-webdriver.taxi]
-        [clojure.java.io]
-        [clojure.algo.monads]
-        [clojure.core.incubator :only [-?>]])
+        [clojure.java.io])
   (:require [clj-yaml.core :as yaml])
   (:gen-class main true))
 
-; TODO: Check monad laws
-; TODO: Find proper name
-; TODO: Find better syntax for domonad
-(defmonad erno-m
-          [
-           m-result (fn m-result-erno [v] v)
-           m-bind   (fn m-bind-erno [mv f]
-                      (if (:error mv) mv (f mv)))
-           ])
+(defmacro do-unless
+  "
+  Evaluates expression if `condition` which was called
+  with result of previous expression returned false.
+
+  Examples:
+  =========
+
+  (do-unless nil? (println 1) (println 2))
+  1
+  nil
+  (do-unless nil? (do (println 1) 1) (println 2))
+  1
+  2
+  nil"
+  ([condition expr & exprs]
+   `(let [r# ~expr]
+    (if (~condition r#)
+       r#
+       (do-unless ~condition ~@exprs))))
+  ([condition expr]
+   expr))
 
 (defn error [selector]
   {:status :fail :error (str (first (vals selector)) " not found")})
@@ -39,79 +50,79 @@
   (with-driver
     {:browser (bio :browser)}
     (let [auth (-> bio :networks network)]
-      {network (domonad
-                 erno-m
-                 [_ (to "http://twitter.com/")
-                  _ (input-text "#signin-email" (auth :login))
-                  _ (input-text "#signin-password" (auth :pass))
-                  _ (safe-click {:css ".submit.flex-table-btn"})
-                  _ (to "http://twitter.com/settings/profile")
-                  _ (implicit-wait 3000)
-                  _ (replace-text {:css "#user_name"} (str (bio :first-name) " " (bio :last-name)))
-                  _ (replace-text {:css "#user_location"} (bio :location))
-                  _ (replace-text {:css "#user_url"} (bio :web))
-                  _ (replace-text {:css "#user_description"} (bio :bio))
-                  _ (safe-click {:css "#settings_save"})
-                  _ (quit)]
+      {network (do-unless
+                 :error
+                 (to "http://twitter.com/")
+                 (input-text "#signin-email" (auth :login))
+                 (input-text "#signin-password" (auth :pass))
+                 (safe-click {:css ".submit.flex-table-btn"})
+                 (to "http://twitter.com/settings/profile")
+                 (implicit-wait 3000)
+                 (replace-text {:css "#user_name"} (str (bio :first-name) " " (bio :last-name)))
+                 (replace-text {:css "#user_location"} (bio :location))
+                 (replace-text {:css "#user_url"} (bio :web))
+                 (replace-text {:css "#user_description"} (bio :bio))
+                 (safe-click {:css "#settings_save"})
+                 (quit)
                  {network "ok"})})))
 
 (defn update-foursquare-bio [bio network]
   (with-driver
     {:browser (bio :browser)}
     (let [auth (-> bio :networks network)]
-      {network (domonad
-                 erno-m
-                 [_ (to "https://foursquare.com/login?continue=%2F&clicked=true")
-                  _ (input-text "#username" (auth :login))
-                  _ (input-text "#password" (auth :pass))
-                  _ (safe-click {:css "input.greenButton"})
-                  _ (to "https://foursquare.com/settings/")
-                  _ (replace-text {:css "#firstname"} (bio :first-name))
-                  _ (replace-text {:css "#lastname"} (bio :last-name))
-                  _ (replace-text {:css "#userEmail"} (bio :email))
-                  _ (replace-text {:css "textarea.formStyle"} (bio :bio))
-                  _ (replace-text {:css "#ht_id"} (bio :location))
-                  _ (safe-click {:css "input.greenButton"})
-                  _ (quit)]
+      {network (do-unless
+                 :error
+                 (to "https://foursquare.com/login?continue=%2F&clicked=true")
+                 (input-text "#username" (auth :login))
+                 (input-text "#password" (auth :pass))
+                 (safe-click {:css "input.greenButton"})
+                 (to "https://foursquare.com/settings/")
+                 (replace-text {:css "#firstname"} (bio :first-name))
+                 (replace-text {:css "#lastname"} (bio :last-name))
+                 (replace-text {:css "#userEmail"} (bio :email))
+                 (replace-text {:css "textarea.formStyle"} (bio :bio))
+                 (replace-text {:css "#ht_id"} (bio :location))
+                 (safe-click {:css "input.greenButton"})
+                 (quit)
                  {:status "ok"})})))
 
 (defn update-github-bio [bio network]
   (with-driver
     {:browser (bio :browser)}
     (let [auth (-> bio :networks network)]
-      {network (domonad
-                 erno-m
-                 [_ (to "https://github.com/login")
-                  _ (input-text "#login_field" (auth :login))
-                  _ (input-text "#password" (auth :pass))
-                  _ (safe-click {:xpath "//input[@type='submit']"})
-                  _ (to "https://github.com/settings/profile")
-                  _ (replace-text {:xpath "//dl[@data-name='profile_name']//input"}
-                                  (str (bio :first-name) " " (bio :last-name)))
-                  _ (replace-text {:xpath "//dl[@data-name='profile_email']//input"} (bio :email))
-                  _ (replace-text {:xpath "//dl[@data-name='profile_blog']//input"} (bio :web))
-                  _ (replace-text {:xpath "//dl[@data-name='profile_company']//input"} (bio :company))
-                  _ (replace-text {:xpath "//dl[@data-name='profile_location']//input"} (bio :location))
-                  _ (replace-text {:xpath "//dl[@data-name='gravatar_email']//input"} (bio :email))
-                  _ (safe-click {:css "button.button.classy.primary"})
-                  _ (quit)]
+      {network (do-unless
+                 :error
+                 (to "https://github.com/login")
+                 (input-text "#login_field" (auth :login))
+                 (input-text "#password" (auth :pass))
+                 (safe-click {:xpath "//input[@type='submit']"})
+                 (to "https://github.com/settings/profile")
+                 (replace-text {:xpath "//dl[@data-name='profile_name']//input"}
+                               (str (bio :first-name) " " (bio :last-name)))
+                 (replace-text {:xpath "//dl[@data-name='profile_email']//input"} (bio :email))
+                 (replace-text {:xpath "//dl[@data-name='profile_blog']//input"} (bio :web))
+                 (replace-text {:xpath "//dl[@data-name='profile_company']//input"} (bio :company))
+                 (replace-text {:xpath "//dl[@data-name='profile_location']//input"} (bio :location))
+                 (replace-text {:xpath "//dl[@data-name='gravatar_email']//input"} (bio :email))
+                 (safe-click {:css "button.button.classy.primary"})
+                 (quit)
                  {:status "ok"})})))
 
 (defn update-instagram-bio [bio network]
   (with-driver
     {:browser (bio :browser)}
     (let [auth (-> bio :networks network)]
-      {network (domonad
-                 erno-m
-                 [_ (to "https://instagram.com/accounts/login/?next=/accounts/edit/")
-                  _ (replace-text {:css "#id_username"} (auth :login))
-                  _ (replace-text {:css "#id_password"} (auth :pass))
-                  _ (safe-click {:css "input.button-green"})
-                  _ (replace-text {:css "#id_first_name"} (str (bio :first-name) " " (bio :last-name)))
-                  _ (replace-text {:css "#id_external_url"} (bio :web))
-                  _ (replace-text {:css "#id_biography"} (bio :bio))
-                  _ (safe-click {:css "input.button-green"})
-                  _ (quit)]
+      {network (do-unless
+                 :error
+                 (to "https://instagram.com/accounts/login/?next=/accounts/edit/")
+                 (replace-text {:css "#id_username"} (auth :login))
+                 (replace-text {:css "#id_password"} (auth :pass))
+                 (safe-click {:css "input.button-green"})
+                 (replace-text {:css "#id_first_name"} (str (bio :first-name) " " (bio :last-name)))
+                 (replace-text {:css "#id_external_url"} (bio :web))
+                 (replace-text {:css "#id_biography"} (bio :bio))
+                 (safe-click {:css "input.button-green"})
+                 (quit)
                  {:status "ok"})})))
 
 
