@@ -9,12 +9,12 @@
 ; TODO: Check monad laws
 ; TODO: Find proper name
 ; TODO: Find better syntax for domonad
-(defmonad mumbo-m
+(defmonad erno-m
    [m-zero   nil
-    m-result (fn m-result-mumbo [v] v)
-    m-bind   (fn m-bind-mumbo [mv f]
+    m-result (fn m-result-erno [v] "ok")
+    m-bind   (fn m-bind-erno [mv f]
                (if (:error mv) mv (f mv)))
-    ; m-plus   (fn m-plus-mumbo [& mvs]
+    ; m-plus   (fn m-plus-erno [& mvs]
     ;            (first (drop-while nil? mvs)))
     ])
 
@@ -37,7 +37,7 @@
       (click el)
       (error selector))))
 
-(defn update-twitter-bio [bio]
+(defn update-twitter-bio [bio network]
   (with-driver {:browser (bio :browser)}
                (to "http://twitter.com/")
                (let [auth (-> bio :networks :twitter)]
@@ -52,9 +52,9 @@
                (replace-text {:css "#user_description"} (bio :bio))
                (click "#settings_save")
                (quit))
-  {:twitter "ok"})
+  {network "ok"})
 
-(defn update-foursquare-bio [bio]
+(defn update-foursquare-bio [bio network]
   (with-driver {:browser (bio :browser)}
                (to "https://foursquare.com/login?continue=%2F&clicked=true")
                (let [auth (-> bio :networks :foursquare)]
@@ -70,9 +70,9 @@
                (replace-text {:css "#ht_id"} (bio :location))
                (click (find-element {:css "input.greenButton"}))
                (quit))
-  {:foursquare "ok"})
+  {network "ok"})
 
-(defn update-github-bio [bio]
+(defn update-github-bio [bio network]
   (with-driver {:browser (bio :browser)}
                (to "https://github.com/login")
                (let [auth (-> bio :networks :github)]
@@ -89,12 +89,12 @@
                (replace-text {:xpath "//dl[@data-name='gravatar_email']//input"} (bio :email))
                (click (find-element {:css "button.button.classy.primary"}))
                (quit))
-  {:github "ok"})
+  {network "ok"})
 
 (defn update-instagram-bio [bio network]
   (with-driver {:browser (bio :browser)}
                (let [auth (-> bio :networks network)]
-                 (let [res (domonad mumbo-m
+                 (let [res (domonad erno-m
                                     [_ (to "https://instagram.com/accounts/login/?next=/accounts/edit/")
                                      _ (replace-text {:css "#id_username"} (auth :login))
                                      _ (replace-text {:css "#id_password"} (auth :pass))
@@ -110,21 +110,22 @@
 (def updaters
   {
    :instagram update-instagram-bio
-   ; :github update-github-bio
-   ; :foursquare update-foursquare-bio
-   ; :twitter update-twitter-bio
+   :github update-github-bio
+   :foursquare update-foursquare-bio
+   :twitter update-twitter-bio
    })
 
 (defn update-bio [config network]
   (if-let [updater (updaters network)]
     (updater config network)
-    {network "not supported"}))
+    {network {:error "not supported"}}))
 
 (defn- write-to [file-name text]
   (with-open [wrtr (writer file-name)]
     (.write wrtr text)))
 
 ; TODO: Make it parallel
+; TODO: Make output YAML more convinient
 (defn -main [input-file output-file]
   (let [config (yaml/parse-string (slurp input-file))]
     (write-to output-file

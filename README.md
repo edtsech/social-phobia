@@ -4,7 +4,7 @@ Update your social profiles.
 
 ## Usage
 
-Create config file with following context:
+Create config file with following content:
 
 ``` yaml
 # Browser
@@ -44,7 +44,7 @@ company: "Acme Company"
 
 Run with:
 
-`java -jar social-phobia-0.1.0-standalone.jar config.yml output.yml`
+`java -jar target/social-phobia-0.1.0-standalone.jar config.yml output.yml`
 
 ```
 $ cat output.yml
