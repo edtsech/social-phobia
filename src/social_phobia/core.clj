@@ -6,10 +6,10 @@
   (:require [clj-yaml.core :as yaml])
   (:gen-class main true))
 
+; TODO: Check monad laws
+; TODO: Find proper name
+; TODO: Find better syntax for domonad
 (defmonad mumbo-m
-   "Monad describing computations with possible failures. Failure is
-    represented by nil, any other value is considered valid. As soon as
-    a step returns nil, the whole computation will yield nil as well."
    [m-zero   nil
     m-result (fn m-result-mumbo [v] v)
     m-bind   (fn m-bind-mumbo [mv f]
@@ -26,17 +26,15 @@
   [selector text]
   (let [el (find-element selector)]
     (if (:webelement el)
-      (do
-        (-> el
-          clear
-          (input-text text)))
+      (-> el
+        clear
+        (input-text text))
       (error selector))))
 
 (defn- safe-click [selector]
   (let [el (find-element selector)]
     (if (:webelement el)
-      (do
-        (click el))
+      (click el)
       (error selector))))
 
 (defn update-twitter-bio [bio]
@@ -101,7 +99,6 @@
                                      _ (replace-text {:css "#id_username"} (auth :login))
                                      _ (replace-text {:css "#id_password"} (auth :pass))
                                      _ (safe-click {:css "input.button-green"})
-                                     ; (implicit-wait 3000)
                                      _ (replace-text {:css "#id_first_name"} (str (bio :first-name) " " (bio :last-name)))
                                      _ (replace-text {:css "#id_external_url"} (bio :web))
                                      _ (replace-text {:css "#id_biography"} (bio :bio))
@@ -127,6 +124,7 @@
   (with-open [wrtr (writer file-name)]
     (.write wrtr text)))
 
+; TODO: Make it parallel
 (defn -main [input-file output-file]
   (let [config (yaml/parse-string (slurp input-file))]
     (write-to output-file
