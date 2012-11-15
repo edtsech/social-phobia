@@ -50,10 +50,11 @@ Last build you can get [here](https://dl.dropbox.com/u/2428018/social-phobia-0.1
 
 ```
 $ cat output.yml
-- {instagram: ok}
-- {foursquare: ok}
-- {github: ok}
-- {twitter: ok}
+- instagram: {status: ok}
+- foursquare: {status: ok}
+- github: {status: ok}
+- twitter: {error: #signin-email not found}
+- facebook: {error: not supported}
 ```
 
 ## License
