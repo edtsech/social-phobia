@@ -44,9 +44,9 @@ company: "Acme Company"
 
 Run with:
 
-`java -jar target/social-phobia-0.1.0-standalone.jar config.yml output.yml`
+`java -jar target/social-phobia-0.1.1-standalone.jar config.yml output.yml`
 
-Last build you can get [here](https://dl.dropbox.com/u/2428018/social-phobia-0.1.0-standalone.jar).
+Last build you can get [here](https://dl.dropbox.com/u/2428018/social-phobia-0.1.1-standalone.jar).
 
 ```
 $ cat output.yml
