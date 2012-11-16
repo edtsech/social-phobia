@@ -53,8 +53,8 @@
       {network (do-unless
                  :error
                  (to "http://twitter.com/")
-                 (input-text "#signin-email" (auth :login))
-                 (input-text "#signin-password" (auth :pass))
+                 (replace-text {:css "#signin-email"} (auth :login))
+                 (replace-text {:css "#signin-password"} (auth :pass))
                  (safe-click {:css ".submit.flex-table-btn"})
                  (to "http://twitter.com/settings/profile")
                  (implicit-wait 3000)
@@ -64,7 +64,7 @@
                  (replace-text {:css "#user_description"} (bio :bio))
                  (safe-click {:css "#settings_save"})
                  (quit)
-                 {network "ok"})})))
+                 {:status "ok"})})))
 
 (defn update-foursquare-bio [bio network]
   (with-driver
@@ -73,8 +73,8 @@
       {network (do-unless
                  :error
                  (to "https://foursquare.com/login?continue=%2F&clicked=true")
-                 (input-text "#username" (auth :login))
-                 (input-text "#password" (auth :pass))
+                 (replace-text {:css "#username"} (auth :login))
+                 (replace-text {:css "#password"} (auth :pass))
                  (safe-click {:css "input.greenButton"})
                  (to "https://foursquare.com/settings/")
                  (replace-text {:css "#firstname"} (bio :first-name))
@@ -93,8 +93,8 @@
       {network (do-unless
                  :error
                  (to "https://github.com/login")
-                 (input-text "#login_field" (auth :login))
-                 (input-text "#password" (auth :pass))
+                 (replace-text {:css "#login_field"} (auth :login))
+                 (replace-text {:css "#password"} (auth :pass))
                  (safe-click {:xpath "//input[@type='submit']"})
                  (to "https://github.com/settings/profile")
                  (replace-text {:xpath "//dl[@data-name='profile_name']//input"}
