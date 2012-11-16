@@ -21,9 +21,9 @@
   nil"
   ([condition expr & exprs]
    `(let [r# ~expr]
-    (if (~condition r#)
-       r#
-       (do-unless ~condition ~@exprs))))
+      (if (~condition r#)
+        r#
+        (do-unless ~condition ~@exprs))))
   ([condition expr]
    expr))
 
