@@ -40,13 +40,14 @@ web: "https://about.me/john_smith"
 bio: "Biography"
 email: "example@example.com"
 company: "Acme Company"
+avatar-path: "~/avatar.jpg" # Currently work only for Foursquare
 ```
 
 Run with:
 
-`java -jar target/social-phobia-0.1.3-standalone.jar config.yml output.yml`
+`java -jar target/social-phobia-0.1.4-standalone.jar config.yml output.yml`
 
-Last build you can get [here](https://dl.dropbox.com/u/2428018/social-phobia-0.1.3-standalone.jar).
+Last build you can get [here](https://dl.dropbox.com/u/2428018/social-phobia-0.1.4-standalone.jar).
 
 ```
 $ cat output.yml
